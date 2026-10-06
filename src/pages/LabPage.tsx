@@ -103,6 +103,13 @@ export function LabPage() {
     }
   }, [reset]);
 
+  const openFilePicker = useCallback(() => {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+      fileInputRef.current.click();
+    }
+  }, []);
+
   const handleDemoSelect = useCallback((demo: DemoImage) => {
     setSelectedDemo(demo);
     setSelectedImage(null);
@@ -163,7 +170,7 @@ export function LabPage() {
                   onDragOver={e => { e.preventDefault(); setDragOver(true); }}
                   onDragLeave={() => setDragOver(false)}
                   onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={openFilePicker}
                   className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-all ${
                     dragOver
                       ? 'border-qm-primary bg-qm-primary/5'
@@ -178,7 +185,7 @@ export function LabPage() {
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
-                    className="hidden"
+                    className="sr-only"
                     onChange={e => {
                       const file = e.target.files?.[0];
                       if (file) handleFileSelect(file);
@@ -212,19 +219,27 @@ export function LabPage() {
                     )}
                   </div>
 
-                  <div className="mt-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ImageIcon className="w-4 h-4 text-qm-primary" />
-                      <span className="text-xs font-mono text-qm-muted">
+                  <div className="mt-3 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <ImageIcon className="w-4 h-4 text-qm-primary shrink-0" />
+                      <span className="text-xs font-mono text-qm-muted truncate">
                         {selectedDemo ? selectedDemo.modality : 'Uploaded image'}
                       </span>
                     </div>
-                    <button
-                      onClick={() => { setSelectedImage(null); setSelectedDemo(null); reset(); }}
-                      className="text-xs text-qm-dim hover:text-qm-text transition-colors"
-                    >
-                      Remove
-                    </button>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button
+                        onClick={openFilePicker}
+                        className="text-xs text-qm-primary hover:text-qm-accent transition-colors"
+                      >
+                        Upload New
+                      </button>
+                      <button
+                        onClick={() => { setSelectedImage(null); setSelectedDemo(null); reset(); }}
+                        className="text-xs text-qm-dim hover:text-qm-text transition-colors"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
 
                   {/* Image metadata when a demo is selected */}
