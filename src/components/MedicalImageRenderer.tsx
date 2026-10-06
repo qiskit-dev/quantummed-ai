@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import type { DemoImage } from '@/data/content';
 
 interface MedicalImageRendererProps {
@@ -7,6 +8,10 @@ interface MedicalImageRendererProps {
 
 export function MedicalImageRenderer({ demo, scanning = false }: MedicalImageRendererProps) {
   const size = 256;
+  const uid = useId().replace(/:/g, '');
+  const bgId = `bg-${uid}`;
+  const blurId = `blur-${uid}`;
+  const glowId = `glow-${uid}`;
 
   return (
     <svg
@@ -15,15 +20,15 @@ export function MedicalImageRenderer({ demo, scanning = false }: MedicalImageRen
       preserveAspectRatio="xMidYMid slice"
     >
       <defs>
-        <radialGradient id={`bg-${demo.id}`} cx="50%" cy="45%" r="70%">
+        <radialGradient id={bgId} cx="50%" cy="45%" r="70%">
           <stop offset="0%" stopColor="#0A1428" />
           <stop offset="60%" stopColor="#050816" />
           <stop offset="100%" stopColor="#020410" />
         </radialGradient>
-        <filter id={`blur-${demo.id}`}>
+        <filter id={blurId}>
           <feGaussianBlur stdDeviation="1.5" />
         </filter>
-        <filter id={`glow-${demo.id}`}>
+        <filter id={glowId}>
           <feGaussianBlur stdDeviation="3" result="blur" />
           <feMerge>
             <feMergeNode in="blur" />
@@ -33,11 +38,12 @@ export function MedicalImageRenderer({ demo, scanning = false }: MedicalImageRen
       </defs>
 
       {/* Background */}
-      <rect width={size} height={size} fill={`url(#bg-${demo.id})`} />
+      <rect width={size} height={size} fill={`url(#${bgId})`} />
 
-      {demo.id === 'A' && <CellularTexture size={size} scanning={scanning} />}
-      {demo.id === 'B' && <TissueStructure size={size} scanning={scanning} />}
+      {demo.id === 'A' && <CellularTexture size={size} scanning={scanning} blurId={blurId} />}
+      {demo.id === 'B' && <TissueStructure size={size} scanning={scanning} blurId={blurId} />}
       {demo.id === 'C' && <RetinalScan size={size} scanning={scanning} />}
+      {demo.id === 'D' && <XrayScan size={size} scanning={scanning} blurId={blurId} />}
 
       {/* Scan line overlay */}
       {scanning && (
@@ -48,7 +54,7 @@ export function MedicalImageRenderer({ demo, scanning = false }: MedicalImageRen
           height="3"
           fill="#00E5FF"
           opacity="0.6"
-          filter={`url(#glow-${demo.id})`}
+          filter={`url(#${glowId})`}
         >
           <animate attributeName="y" from="0" to={size} dur="2s" repeatCount="indefinite" />
         </rect>
@@ -74,9 +80,8 @@ export function MedicalImageRenderer({ demo, scanning = false }: MedicalImageRen
   );
 }
 
-function CellularTexture({ size, scanning }: { size: number; scanning: boolean }) {
+function CellularTexture({ size, scanning, blurId }: { size: number; scanning: boolean; blurId: string }) {
   const cells: { cx: number; cy: number; r: number; opacity: number }[] = [];
-  // Generate pseudo-random cell positions
   let seed = 42;
   const rand = () => {
     seed = (seed * 9301 + 49297) % 233280;
@@ -93,8 +98,7 @@ function CellularTexture({ size, scanning }: { size: number; scanning: boolean }
   }
 
   return (
-    <g filter={`url(#blur-${'A'})`}>
-      {/* Circular cells */}
+    <g filter={`url(#${blurId})`}>
       {cells.map((cell, i) => (
         <g key={i}>
           <circle
@@ -122,7 +126,6 @@ function CellularTexture({ size, scanning }: { size: number; scanning: boolean }
           />
         </g>
       ))}
-      {/* Highlighted region — potential anomaly */}
       <circle
         cx={size * 0.65}
         cy={size * 0.4}
@@ -139,8 +142,7 @@ function CellularTexture({ size, scanning }: { size: number; scanning: boolean }
   );
 }
 
-function TissueStructure({ size, scanning }: { size: number; scanning: boolean }) {
-  // Organic curved structures — like tissue layers
+function TissueStructure({ size, scanning, blurId }: { size: number; scanning: boolean; blurId: string }) {
   const layers = Array.from({ length: 6 }, (_, i) => {
     const y = 30 + i * 35;
     const path = `M 0 ${y} Q ${size * 0.25} ${y - 15 + i * 3} ${size * 0.5} ${y} T ${size} ${y}`;
@@ -159,7 +161,6 @@ function TissueStructure({ size, scanning }: { size: number; scanning: boolean }
           opacity={layer.opacity}
         />
       ))}
-      {/* Dense region */}
       <ellipse
         cx={size * 0.55}
         cy={size * 0.5}
@@ -167,7 +168,7 @@ function TissueStructure({ size, scanning }: { size: number; scanning: boolean }
         ry={35}
         fill="#7C5CFF"
         opacity={0.15}
-        filter="url(#blur-B)"
+        filter={`url(#${blurId})`}
       />
       <ellipse
         cx={size * 0.55}
@@ -179,7 +180,6 @@ function TissueStructure({ size, scanning }: { size: number; scanning: boolean }
         strokeWidth="1.5"
         opacity={0.4}
       />
-      {/* Anomaly marker */}
       <circle
         cx={size * 0.55}
         cy={size * 0.5}
@@ -192,7 +192,6 @@ function TissueStructure({ size, scanning }: { size: number; scanning: boolean }
       >
         {scanning && <animate attributeName="r" values="18;24;18" dur="2s" repeatCount="indefinite" />}
       </circle>
-      {/* Texture dots */}
       {Array.from({ length: 30 }).map((_, i) => {
         const x = ((i * 137) % size);
         const y = ((i * 97) % size);
@@ -208,15 +207,12 @@ function RetinalScan({ size, scanning }: { size: number; scanning: boolean }) {
 
   return (
     <g>
-      {/* Outer retinal boundary */}
       <circle cx={cx} cy={cy} r={size * 0.42} fill="none" stroke="#00E5FF" strokeWidth="2" opacity="0.3" />
       <circle cx={cx} cy={cy} r={size * 0.38} fill="#7C5CFF" opacity="0.05" />
 
-      {/* Optic disc */}
       <circle cx={cx - 30} cy={cy + 20} r="14" fill="#7C5CFF" opacity="0.25" />
       <circle cx={cx - 30} cy={cy + 20} r="14" fill="none" stroke="#7C5CFF" strokeWidth="1.5" opacity="0.5" />
 
-      {/* Blood vessels — branching lines */}
       {[
         `M ${cx - 30} ${cy + 20} Q ${cx - 60} ${cy - 10} ${cx - 90} ${cy - 40}`,
         `M ${cx - 30} ${cy + 20} Q ${cx - 50} ${cy + 40} ${cx - 70} ${cy + 70}`,
@@ -235,11 +231,9 @@ function RetinalScan({ size, scanning }: { size: number; scanning: boolean }) {
         />
       ))}
 
-      {/* Fovea */}
       <circle cx={cx + 15} cy={cy - 5} r="6" fill="#00E5FF" opacity="0.2" />
       <circle cx={cx + 15} cy={cy - 5} r="6" fill="none" stroke="#00E5FF" strokeWidth="1" opacity="0.4" />
 
-      {/* Micro-aneurysm markers */}
       {[
         { x: cx + 40, y: cy - 30 },
         { x: cx - 20, y: cy - 45 },
@@ -256,6 +250,161 @@ function RetinalScan({ size, scanning }: { size: number; scanning: boolean }) {
           {scanning && <animate attributeName="opacity" values="0.2;0.8;0.2" dur="1s" begin={`${i * 0.3}s`} repeatCount="indefinite" />}
         </circle>
       ))}
+    </g>
+  );
+}
+
+function XrayScan({ size, scanning, blurId }: { size: number; scanning: boolean; blurId: string }) {
+  const cx = size / 2;
+  const cy = size / 2;
+
+  return (
+    <g>
+      {/* Rib cage — curved arcs on both sides */}
+      {[0, 1, 2, 3, 4, 5].map(i => {
+        const offsetY = 40 + i * 28;
+        const ribWidth = 95 - i * 8;
+        return (
+          <g key={`rib-${i}`}>
+            <path
+              d={`M ${cx - ribWidth} ${offsetY} Q ${cx - ribWidth - 15} ${offsetY + 14} ${cx - ribWidth + 5} ${offsetY + 28}`}
+              fill="none"
+              stroke="#B8D4F0"
+              strokeWidth="3"
+              opacity={0.2 + i * 0.04}
+              filter={`url(#${blurId})`}
+            />
+            <path
+              d={`M ${cx + ribWidth} ${offsetY} Q ${cx + ribWidth + 15} ${offsetY + 14} ${cx + ribWidth - 5} ${offsetY + 28}`}
+              fill="none"
+              stroke="#B8D4F0"
+              strokeWidth="3"
+              opacity={0.2 + i * 0.04}
+              filter={`url(#${blurId})`}
+            />
+          </g>
+        );
+      })}
+
+      {/* Spine — central column */}
+      <rect
+        x={cx - 8}
+        y={20}
+        width={16}
+        height={size - 40}
+        rx={4}
+        fill="#E0E8F0"
+        opacity={0.12}
+        filter={`url(#${blurId})`}
+      />
+      {Array.from({ length: 10 }).map((_, i) => (
+        <rect
+          key={`vert-${i}`}
+          x={cx - 10}
+          y={28 + i * 22}
+          width={20}
+          height={14}
+          rx={3}
+          fill="none"
+          stroke="#B8D4F0"
+          strokeWidth="1.5"
+          opacity={0.25}
+        />
+      ))}
+
+      {/* Lung fields — darker regions */}
+      <ellipse
+        cx={cx - 55}
+        cy={cy + 10}
+        rx={42}
+        ry={75}
+        fill="#020410"
+        opacity={0.5}
+      />
+      <ellipse
+        cx={cx + 55}
+        cy={cy + 10}
+        rx={42}
+        ry={75}
+        fill="#020410"
+        opacity={0.5}
+      />
+
+      {/* Heart shadow */}
+      <ellipse
+        cx={cx + 12}
+        cy={cy + 25}
+        rx={28}
+        ry={35}
+        fill="#0A1428"
+        opacity={0.6}
+        filter={`url(#${blurId})`}
+      />
+      <ellipse
+        cx={cx + 12}
+        cy={cy + 25}
+        rx={28}
+        ry={35}
+        fill="none"
+        stroke="#7090B0"
+        strokeWidth="1"
+        opacity={0.3}
+      />
+
+      {/* Clavicles */}
+      <path
+        d={`M ${cx - 85} 35 Q ${cx - 40} 28 ${cx - 15} 38`}
+        fill="none"
+        stroke="#D0DCE8"
+        strokeWidth="4"
+        opacity={0.3}
+        filter={`url(#${blurId})`}
+      />
+      <path
+        d={`M ${cx + 85} 35 Q ${cx + 40} 28 ${cx + 15} 38`}
+        fill="none"
+        stroke="#D0DCE8"
+        strokeWidth="4"
+        opacity={0.3}
+        filter={`url(#${blurId})`}
+      />
+
+      {/* Nodule / anomaly marker — highlighted region */}
+      <circle
+        cx={cx - 50}
+        cy={cy - 15}
+        r={12}
+        fill="none"
+        stroke="#FFB347"
+        strokeWidth="2.5"
+        strokeDasharray="4 3"
+        opacity={scanning ? 0.9 : 0.6}
+      >
+        {scanning && <animate attributeName="opacity" values="0.3;0.9;0.3" dur="1.2s" repeatCount="indefinite" />}
+      </circle>
+      <circle
+        cx={cx - 50}
+        cy={cy - 15}
+        r={5}
+        fill="#FFB347"
+        opacity={scanning ? 0.6 : 0.35}
+      >
+        {scanning && <animate attributeName="r" values="4;7;4" dur="1.2s" repeatCount="indefinite" />}
+      </circle>
+
+      {/* Second smaller marker */}
+      <circle
+        cx={cx + 60}
+        cy={cy + 50}
+        r={8}
+        fill="none"
+        stroke="#00FFD0"
+        strokeWidth="2"
+        strokeDasharray="3 2"
+        opacity={scanning ? 0.7 : 0.4}
+      >
+        {scanning && <animate attributeName="opacity" values="0.2;0.7;0.2" dur="1.5s" begin="0.4s" repeatCount="indefinite" />}
+      </circle>
     </g>
   );
 }

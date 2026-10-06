@@ -321,6 +321,19 @@ export const demoImages: DemoImage[] = [
     ],
     features: [0.71, 0.39, 0.58, 0.83, 0.46, 0.62, 0.35, 0.51],
   },
+  {
+    id: 'D',
+    label: 'Demo Pattern D',
+    pattern: 'Chest X-Ray',
+    description: 'Simulated chest radiograph — X-ray style',
+    modality: 'Simulated Chest X-Ray',
+    predictions: [
+      { label: 'Normal Study', confidence: 9.8 },
+      { label: 'Inflammatory Pattern', confidence: 26.3 },
+      { label: 'Focal Opacity Detected', confidence: 63.9 },
+    ],
+    features: [0.68, 0.55, 0.79, 0.41, 0.63, 0.37, 0.48, 0.52],
+  },
 ];
 
 export interface AnalysisStep {

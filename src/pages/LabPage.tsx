@@ -19,6 +19,7 @@ import { QuantumCircuit } from '@/components/QuantumCircuit';
 import { FeatureMap } from '@/components/FeatureMap';
 import { DisclaimerBanner } from '@/components/DisclaimerBanner';
 import { MedicalImageRenderer } from '@/components/MedicalImageRenderer';
+import { AnalysisReport } from '@/components/AnalysisReport';
 import { demoImages, analysisSteps } from '@/data/content';
 import type { DemoImage } from '@/data/content';
 
@@ -117,9 +118,9 @@ export function LabPage() {
 
   const hasImage = selectedImage || selectedDemo;
   const allPredictions = selectedDemo?.predictions ?? [
-    { label: 'Normal Tissue', confidence: 15.2 },
-    { label: 'Benign Pattern', confidence: 28.7 },
-    { label: 'Atypical Cells', confidence: 56.1 },
+    { label: 'Normal Study', confidence: 18.4 },
+    { label: 'Inflammatory Pattern', confidence: 25.5 },
+    { label: 'Focal Opacity Detected', confidence: 56.1 },
   ];
   const topPrediction = allPredictions.reduce((a, b) => (a.confidence > b.confidence ? a : b));
 
@@ -245,7 +246,7 @@ export function LabPage() {
               {/* Demo images */}
               <div className="mt-4">
                 <p className="text-xs font-mono text-qm-dim mb-2">Or use a simulated biomedical image:</p>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {demoImages.map(demo => (
                     <button
                       key={demo.id}
@@ -476,7 +477,7 @@ export function LabPage() {
                 <div className="space-y-2 mb-4">
                   {allPredictions.map((pred, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <span className="text-xs text-qm-muted w-32 shrink-0 truncate">{pred.label}</span>
+                      <span className="text-xs text-qm-muted w-28 sm:w-32 shrink-0 truncate">{pred.label}</span>
                       <div className="flex-1 h-4 bg-qm-surface rounded-full overflow-hidden">
                         <div
                           className={`h-full rounded-full transition-all duration-1000 ${
@@ -550,6 +551,15 @@ export function LabPage() {
                   </p>
                 </div>
               </div>
+            )}
+
+            {/* Detailed analysis report */}
+            {analysisState === 'complete' && hasImage && (
+              <AnalysisReport
+                selectedDemo={selectedDemo}
+                topPrediction={topPrediction}
+                qubits={qubits}
+              />
             )}
           </div>
         </div>
